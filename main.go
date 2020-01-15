@@ -23,12 +23,12 @@ func main() {
 			break
 		}
 		for _, result := range results {
-			if containerListen[result.Key] == false  && result.Record.Used == "true"{
-				stop[result.Key] = make(chan string,1)
-				go startReciver(stop[result.Key],result.Key)
+			if containerListen[result.ContainerID] == false  && result.Used == "true"{
+				stop[result.ContainerID] = make(chan string,1)
+				go startReciver(stop[result.ContainerID],result.ContainerID)
 			}
-			if containerListen[result.Key] == true  && result.Record.Used == "false" {
-				stop[result.Key] <- "close"
+			if containerListen[result.ContainerID] == true  && result.Used == "false" {
+				stop[result.ContainerID] <- "close"
 			}
 		}
 		time.Sleep(time.Duration(2)*time.Second)

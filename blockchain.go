@@ -22,11 +22,6 @@ type QueryContainerResult struct {
 	MamState        MAMState       `json:"mamstate"`
 }
 
-type QueryAllContainerResult struct {
-	Key           string       `json:"Key"`
-	Record        Container       `json:"Record"`
-}
-
 type MAMState struct {
 	Root           string       `json:"root"`
 	SideKey        string       `json:"sideKey"`
@@ -34,9 +29,16 @@ type MAMState struct {
 
 }
 type Response struct {
-	Code           string       `json:"code"`
-	Message        string       `json:"message"`
-	Result           string       `json:"result"`
+	Code           int       `json:"code"`
+	Message        string       `json:"msg"`
+	Result           string       `json:"data"`
+}
+
+type AllResponse struct {
+	Code           int             `json:"code"`
+	Message        string          `json:"msg"`
+	Count          int             `json:"count"`
+	Result         []Container       `json:"data"`
 }
 
 func transmit(seed string, sideKey string, message *IoTData) {
@@ -79,7 +81,7 @@ func queryContainer(container string) (string, string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if response.Code == "200" {
+	if response.Code == 200 {
 		fmt.Println(response.Message)
 		var result QueryContainerResult
 		err :=json.Unmarshal([]byte(response.Result),&result)
@@ -93,7 +95,7 @@ func queryContainer(container string) (string, string) {
 	return "",""
 }
 
-func queryAllContainer() []QueryAllContainerResult {
+func queryAllContainer() []Container {
 	client := &http.Client{}
 	data := make(map[string]interface{})
 	data["Func"] = "QueryAllContainers"
@@ -106,19 +108,14 @@ func queryAllContainer() []QueryAllContainerResult {
 	req, err := http.NewRequest("POST",SERVICEURL+"/fabric/queryallcontainers",bytes.NewReader(bytesData))
 	resp, err := client.Do(req)
 	body, err := ioutil.ReadAll(resp.Body)
-	var response Response
+	var response AllResponse
 	err = json.Unmarshal(body,&response)
 	if err != nil {
 		fmt.Println(err)
 	}
-	if response.Code == "200" {
-		//fmt.Println(response.Message)
-		var result []QueryAllContainerResult
-		err :=json.Unmarshal([]byte(response.Result),&result)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return result
+	if response.Code == 200 {
+
+		return response.Result
 	}
-	return []QueryAllContainerResult{}
+	return []Container{}
 }
