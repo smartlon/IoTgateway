@@ -25,30 +25,31 @@ type IoTData struct {
 func timeStamp() string {
 	return strconv.FormatInt(time.Now().UnixNano() / 1000000, 10)
 }
-//接口函数，当收到订阅的消息时会启用这个回调函数
-var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	//fmt.Printf("TOPIC: %s\n", msg.Topic())
-	//fmt.Printf("MSG: %s\n", msg.Payload())
-	var device Device
-	err := json.Unmarshal(msg.Payload(),&device)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	data := &IoTData{
-		device.SensorID,
-		strconv.Itoa(device.Temperature),
-		"",
-		timeStamp(),
-		"run",
-	}
-	time.Sleep(time.Duration(10)*time.Second)
-	transmit(seed,sideKey,data)
-}
-func startReciver(stop  chan string, clientID string) {
+
+func startReciver(stop  chan string, clientID string, token string) {
 	opts := MQTT.NewClientOptions().AddBroker("tcp://2y4x807794.wicp.vip:56866")
 	//连接的客户端名字
 	opts.SetClientID(clientID)
-	opts.SetDefaultPublishHandler(f)
+	opts.SetDefaultPublishHandler(
+		//接口函数，当收到订阅的消息时会启用这个回调函数
+		func(client MQTT.Client, msg MQTT.Message) {
+			//fmt.Printf("TOPIC: %s\n", msg.Topic())
+			//fmt.Printf("MSG: %s\n", msg.Payload())
+			var device Device
+			err := json.Unmarshal(msg.Payload(),&device)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			data := &IoTData{
+				device.SensorID,
+				strconv.Itoa(device.Temperature),
+				"",
+				timeStamp(),
+				"run",
+			}
+			time.Sleep(time.Duration(10)*time.Second)
+			transmit(seed,sideKey,data,token)
+		})
 
 	//create and start a client using the above ClientOptions
 	c := MQTT.NewClient(opts)
@@ -56,7 +57,7 @@ func startReciver(stop  chan string, clientID string) {
 		panic(token.Error())
 	}
 
-	seed, sideKey = queryContainer(clientID)
+	seed, sideKey = queryContainer(clientID,token)
 	fmt.Printf("seed = %s,   sideKey = %s \n",seed,sideKey)
 	//订阅消息
 	if token := c.Subscribe("IOTA/"+clientID, 0, nil); token.Wait() && token.Error() != nil {
@@ -77,3 +78,22 @@ func startReciver(stop  chan string, clientID string) {
 	fmt.Printf("%s is %s \n",clientID,flag)
 	containerListen[clientID] = false
 }
+
+//var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+//	//fmt.Printf("TOPIC: %s\n", msg.Topic())
+//	//fmt.Printf("MSG: %s\n", msg.Payload())
+//	var device Device
+//	err := json.Unmarshal(msg.Payload(),&device)
+//	if err != nil {
+//		fmt.Println(err.Error())
+//	}
+//	data := &IoTData{
+//		device.SensorID,
+//		strconv.Itoa(device.Temperature),
+//		"",
+//		timeStamp(),
+//		"run",
+//	}
+//	time.Sleep(time.Duration(10)*time.Second)
+//	transmit(seed,sideKey,data)
+//}

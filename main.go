@@ -6,6 +6,9 @@ import (
 
 const (
 	SERVICEURL = "http://202.117.43.212:8081"
+	USERNAME = "deliverer1"
+	PASSWORD = "delivererpw"
+	ORGNAME = "deliverer"
 )
 
 var (
@@ -15,10 +18,11 @@ var (
 )
 
 func main() {
+	token := enrollUser(USERNAME,PASSWORD,ORGNAME)
 	stop := make(map[string] chan string)
 	containerListen = make(map[string]bool)
 	for {
-		results := queryAllContainer()
+		results := queryAllContainer(token)
 		if len(results) == 0 {
 			break
 		}

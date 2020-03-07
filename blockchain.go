@@ -41,7 +41,7 @@ type AllResponse struct {
 	Result         []Container       `json:"data"`
 }
 
-func transmit(seed string, sideKey string, message *IoTData) {
+func transmit(seed string, sideKey string, message *IoTData,token string) {
 	client := &http.Client{}
 	data := make(map[string]interface{})
 	data["Message"] = message
@@ -52,6 +52,7 @@ func transmit(seed string, sideKey string, message *IoTData) {
 		fmt.Println(err)
 	}
 	req, err := http.NewRequest("POST",SERVICEURL+"/iota/mamtransmit",bytes.NewReader(bytesData))
+	req.Header.Set("Authorization", "bearer " + token)
 	resp, err := client.Do(req)
 	body, err := ioutil.ReadAll(resp.Body)
 	var response Response
@@ -63,7 +64,7 @@ func transmit(seed string, sideKey string, message *IoTData) {
 
 }
 
-func queryContainer(container string) (string, string) {
+func queryContainer(container string,token string) (string, string) {
 	client := &http.Client{}
 	data := make(map[string]interface{})
 	data["Func"] = "QueryContainer"
@@ -74,6 +75,7 @@ func queryContainer(container string) (string, string) {
 		fmt.Println(err)
 	}
 	req, err := http.NewRequest("POST",SERVICEURL+"/fabric/querycontainer",bytes.NewReader(bytesData))
+	req.Header.Set("Authorization", "bearer " + token)
 	resp, err := client.Do(req)
 	body, err := ioutil.ReadAll(resp.Body)
 	var response Response
@@ -95,7 +97,7 @@ func queryContainer(container string) (string, string) {
 	return "",""
 }
 
-func queryAllContainer() []Container {
+func queryAllContainer(token string) []Container {
 	client := &http.Client{}
 	data := make(map[string]interface{})
 	data["Func"] = "QueryAllContainers"
@@ -106,6 +108,7 @@ func queryAllContainer() []Container {
 		fmt.Println(err)
 	}
 	req, err := http.NewRequest("POST",SERVICEURL+"/fabric/queryallcontainers",bytes.NewReader(bytesData))
+	req.Header.Set("Authorization", "bearer " + token)
 	resp, err := client.Do(req)
 	body, err := ioutil.ReadAll(resp.Body)
 	var response AllResponse
@@ -118,4 +121,35 @@ func queryAllContainer() []Container {
 		return response.Result
 	}
 	return []Container{}
+}
+
+type userResp struct {
+	Message string `json:"msg"`
+	Success bool `json:"success"`
+	Token string `json:"token"`
+}
+
+func enrollUser(userName,password,orgName string) string {
+	client := &http.Client{}
+	data := make(map[string]interface{})
+	data["UserName"] = userName
+	data["PassWord"] = password
+	data["OrgName"] = orgName
+	bytesData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req, err := http.NewRequest("POST",SERVICEURL+"/enrolluser",bytes.NewReader(bytesData))
+	resp, err := client.Do(req)
+	body, err := ioutil.ReadAll(resp.Body)
+	var response userResp
+	err = json.Unmarshal(body,&response)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if response.Success  {
+
+		return response.Token
+	}
+	return ""
 }
