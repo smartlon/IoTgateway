@@ -29,7 +29,7 @@ func main() {
 		for _, result := range results {
 			if containerListen[result.ContainerID] == false  && result.Used == "true"{
 				stop[result.ContainerID] = make(chan string,1)
-				go startReciver(stop[result.ContainerID],result.ContainerID)
+				go startReciver(stop[result.ContainerID],result.ContainerID,token)
 			}
 			if containerListen[result.ContainerID] == true  && result.Used == "false" {
 				stop[result.ContainerID] <- "close"
